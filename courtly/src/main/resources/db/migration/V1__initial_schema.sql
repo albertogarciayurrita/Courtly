@@ -1,0 +1,2 @@
+-- Initial Courtly database migration.
+-- Domain tables will be added in subsequent versioned migrations.

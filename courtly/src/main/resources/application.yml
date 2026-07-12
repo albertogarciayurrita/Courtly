@@ -8,10 +8,17 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:courtly_password}
     driver-class-name: org.postgresql.Driver
 
+  flyway:
+    enabled: true
+    default-schema: courtly
+    schemas:
+      - courtly
+
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: true
     properties:
       hibernate:
         format_sql: true
+        default_schema: courtly
