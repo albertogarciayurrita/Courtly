@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: courtly
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/courtly_db}
+    username: ${SPRING_DATASOURCE_USERNAME:courtly_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:courtly_password}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
