@@ -22,3 +22,6 @@ spring:
       hibernate:
         format_sql: true
         default_schema: courtly
+
+server:
+  port: 8081
