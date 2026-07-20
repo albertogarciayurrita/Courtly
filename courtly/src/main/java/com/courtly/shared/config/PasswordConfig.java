@@ -1,4 +1,4 @@
-package com.courtly.config;
+package com.courtly.shared.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
