@@ -13,6 +13,8 @@ import com.courtly.user.entity.User;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 
 @Service
 public class JwtService {
@@ -44,5 +46,31 @@ public class JwtService {
                 .expiration(Date.from(expirationTime))
                 .signWith(secretKey)
                 .compact();
+    }
+
+    public Claims extractAllClaims(String token) {
+                return Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+    }
+
+    public String extractEmail(String token){
+        return extractAllClaims(token).getSubject();
+    }
+
+    public String extractRole(String token) {
+        return extractAllClaims(token).get("role", String.class);
+    }
+
+    public boolean isTokenValid(String token) {
+        try {
+            extractAllClaims(token);
+            //Date expirationDate = claims.getExpiration();
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
     }
 }

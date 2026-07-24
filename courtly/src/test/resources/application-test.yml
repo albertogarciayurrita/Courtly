@@ -1,0 +1,3 @@
+jwt:
+  secret: courtly-test-secret-key-at-least-32-characters-long
+  expiration: 3600000

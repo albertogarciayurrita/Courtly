@@ -14,7 +14,9 @@ import com.courtly.user.entity.User;
 
 import jakarta.persistence.EntityManager;
 
+import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest
+@ActiveProfiles("test")
 @Transactional
 class UserRepositoryTest {
 
