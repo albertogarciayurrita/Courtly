@@ -10,8 +10,10 @@ import com.courtly.facility.exception.FacilityNotFoundException;
 import com.courtly.facility.exception.InvalidFacilitySchedulerException;
 import com.courtly.facility.repository.FacilityRepository;
 
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Service
 public class FacilityService {
     
     private final FacilityRepository facilityRepository;

@@ -50,20 +50,20 @@ public class FacilityController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/id")
+    @GetMapping("/{id}")
     public ResponseEntity<FacilityResponse> findById(@PathVariable Long id) {
         FacilityResponse response = facilityService.findById(id);
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/id")
-    public ResponseEntity<FacilityResponse> updateFacility(@PathVariable Long id, FacilityRequest request) {
+    @PutMapping("/{id}")
+    public ResponseEntity<FacilityResponse> updateFacility(@PathVariable Long id, @Valid @RequestBody FacilityRequest request) {
         
         FacilityResponse response = facilityService.updateFacility(id, request);
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/id")
+    @DeleteMapping("/{id}")
     public ResponseEntity<FacilityResponse> deleteFacility(@PathVariable Long id) {
         
         facilityService.deleteFacility(id);
