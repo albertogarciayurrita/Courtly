@@ -7,6 +7,7 @@ import com.courtly.facility.dto.FacilityRequest;
 import com.courtly.facility.dto.FacilityResponse;
 import com.courtly.facility.entity.Facility;
 import com.courtly.facility.exception.FacilityNotFoundException;
+import com.courtly.facility.exception.InvalidFacilitySchedulerException;
 import com.courtly.facility.repository.FacilityRepository;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -64,7 +65,7 @@ public class FacilityService {
 
     private void validateSchedule(FacilityRequest request) {
         if (!request.openingTime().isBefore(request.closingTime())) {
-            throw new IllegalArgumentException("Opening time must be before closing time.");
+            throw new InvalidFacilitySchedulerException("Opening time must be before closing time.");
         }
     }
 

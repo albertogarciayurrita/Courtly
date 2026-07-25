@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.courtly.auth.exception.InvalidCredentialsException;
+import com.courtly.facility.exception.FacilityNotFoundException;
+import com.courtly.facility.exception.InvalidFacilitySchedulerException;
 
 
 @RestControllerAdvice
@@ -61,4 +63,40 @@ public ResponseEntity<Map<String, Object>> handleValidationErrors(
             .status(HttpStatus.BAD_REQUEST)
             .body(body);
     }
-}
+
+        @ExceptionHandler(FacilityNotFoundException.class)
+        public ResponseEntity<ApiErrorResponse> handleFacilityNotFound(
+                FacilityNotFoundException exception
+        ) {
+        HttpStatus status = HttpStatus.NOT_FOUND;
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                exception.getMessage()
+        );
+
+        return ResponseEntity
+                .status(status)
+                .body(response);
+        }
+
+        @ExceptionHandler(InvalidFacilitySchedulerException.class)
+        public ResponseEntity<ApiErrorResponse> handleInvalidFacilitySchedule(
+                InvalidFacilitySchedulerException exception
+        ) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                exception.getMessage()
+        );
+
+        return ResponseEntity
+                .status(status)
+                .body(response);
+        }
+        }
