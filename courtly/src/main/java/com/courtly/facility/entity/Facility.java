@@ -20,7 +20,7 @@ public class Facility {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(nullable = false, length = 200)
+    @Column(nullable = false, length = 255)
     private String address;
 
     @Column(length = 500)
