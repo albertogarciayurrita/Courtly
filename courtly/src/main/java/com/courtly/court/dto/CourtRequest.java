@@ -17,7 +17,7 @@ public record CourtRequest(
     String description,
 
     @NotNull(message = "Credit cost must not be null")
-    @DecimalMin(value = "0.0", inclusive = true, message = "Credit cost must be greater than 0")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Credit cost must be greater than 0")
     @Digits(integer = 8, fraction = 2, message = "Credit cost must have at most 8 integer digits and 2 decimal digits")
     BigDecimal creditCost,
 
