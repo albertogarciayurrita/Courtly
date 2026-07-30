@@ -17,7 +17,7 @@ public class BookingSlotService {
     private static final int SLOT_DURATION_MINUTES = 60;
 
     public List<BookingSlot> generateBookingSlots(LocalTime openingTime, LocalTime closingTime) {
-        validateFacilitySchdule(openingTime, closingTime);
+        validateFacilitySchedule(openingTime, closingTime);
 
         List<BookingSlot> slots = new ArrayList<>();
 
@@ -29,13 +29,13 @@ public class BookingSlotService {
 
             currentStartTime = currentEndTime;
             currentEndTime = currentStartTime.plusMinutes(SLOT_DURATION_MINUTES);
-        };
+        }
 
         return slots;
     }
 
 
-    public void validateFacilitySchdule(LocalTime openingTime, LocalTime closingTime){
+    private void validateFacilitySchedule(LocalTime openingTime, LocalTime closingTime){
         if (openingTime == null || closingTime == null) {
             throw new InvalidBookingSlotException(
                 "Facility opening time and closing time are required."
