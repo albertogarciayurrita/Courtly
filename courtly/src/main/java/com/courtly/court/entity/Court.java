@@ -42,7 +42,7 @@ public class Court {
     @JoinColumn(name = "facility_id", nullable = false)
     private Facility facility;
 
-    private Court() {
+    protected Court() {
         // Default constructor for JPA
     }
 
