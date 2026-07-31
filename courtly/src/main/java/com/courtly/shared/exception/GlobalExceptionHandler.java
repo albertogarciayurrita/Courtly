@@ -7,6 +7,7 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -16,6 +17,8 @@ import com.courtly.court.exception.CourtNotFoundException;
 import com.courtly.facility.exception.FacilityNotFoundException;
 import com.courtly.facility.exception.InvalidFacilitySchedulerException;
 import com.courtly.slot.exception.InvalidBookingSlotException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 
 @RestControllerAdvice
@@ -150,6 +153,44 @@ public ResponseEntity<Map<String, Object>> handleValidationErrors(
                 status.value(),
                 status.getReasonPhrase(),
                 exception.getMessage()
+        );
+
+        return ResponseEntity
+                .status(status)
+                .body(response);
+        }
+
+        @ExceptionHandler(MissingServletRequestParameterException.class)
+        public ResponseEntity<ApiErrorResponse> handleMissingRequestParameter(
+                MissingServletRequestParameterException exception
+        ) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                "Required parameter '" + exception.getParameterName()
+                        + "' is missing."
+        );
+
+        return ResponseEntity
+                .status(status)
+                .body(response);
+        }
+
+        @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+        public ResponseEntity<ApiErrorResponse> handleMethodArgumentTypeMismatch(
+                MethodArgumentTypeMismatchException exception
+        ) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                "Parameter '" + exception.getName()
+                        + "' has an invalid format."
         );
 
         return ResponseEntity
