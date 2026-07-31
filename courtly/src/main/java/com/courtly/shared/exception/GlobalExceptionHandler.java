@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.courtly.auth.exception.InvalidCredentialsException;
+import com.courtly.availability.exception.InvalidAvailabilityDateException;
 import com.courtly.court.exception.CourtNotFoundException;
 import com.courtly.facility.exception.FacilityNotFoundException;
 import com.courtly.facility.exception.InvalidFacilitySchedulerException;
@@ -123,6 +124,24 @@ public ResponseEntity<Map<String, Object>> handleValidationErrors(
         @ExceptionHandler(InvalidBookingSlotException.class)
         public ResponseEntity<ApiErrorResponse> handleInvalidBookingSlot(
                 InvalidBookingSlotException exception
+        ) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                exception.getMessage()
+        );
+
+        return ResponseEntity
+                .status(status)
+                .body(response);
+        }
+
+        @ExceptionHandler(InvalidAvailabilityDateException.class)
+        public ResponseEntity<ApiErrorResponse> handleInvalidAvailabilityDate(
+                InvalidAvailabilityDateException exception
         ) {
         HttpStatus status = HttpStatus.BAD_REQUEST;
 
