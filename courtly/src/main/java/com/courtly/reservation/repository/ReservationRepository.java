@@ -10,5 +10,7 @@ import com.courtly.reservation.entity.Reservation;
 public interface ReservationRepository extends JpaRepository<Reservation, Long>{
     
     List<Reservation> findAllByCourt_IdAndReservationDate(Long courtId, LocalDate reservatiDate);
-
-}
+    boolean exiexistsByCourt_IdAndReservationDateAndStartTimeAndStatus(
+        Long courtId, LocalDate reservationDate, String startTime, String status
+    );
+}   
