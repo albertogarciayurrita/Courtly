@@ -4,22 +4,27 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+import org.springframework.stereotype.Service;
+
 import com.courtly.court.entity.Court;
+import com.courtly.court.exception.CourtNotFoundException;
 import com.courtly.court.repository.CourtRepository;
 import com.courtly.reservation.dto.BookingRequest;
 import com.courtly.reservation.dto.BookingResponse;
 import com.courtly.reservation.entity.Reservation;
 import com.courtly.reservation.entity.ReservationStatus;
+import com.courtly.reservation.exception.InactiveCourtException;
 import com.courtly.reservation.exception.InvalidReservationSlotException;
+import com.courtly.reservation.exception.ReservationConflictException;
 import com.courtly.reservation.repository.ReservationRepository;
 import com.courtly.slot.dto.BookingSlot;
 import com.courtly.slot.service.BookingSlotService;
-import com.courtly.user.dto.UserRegistrationRequest;
 import com.courtly.user.entity.User;
 import com.courtly.user.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
 
+@Service
 public class ReservationService {
     
     CourtRepository courtRepository;
@@ -41,10 +46,10 @@ public class ReservationService {
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         Court court = courtRepository.findById(request.courtId())
-            .orElseThrow(() -> new IllegalArgumentException("Court not found"));
+            .orElseThrow(() -> new CourtNotFoundException("Court not found"));
 
         if(!court.isActive()){
-            throw new IllegalArgumentException("Court with ID " + court.getId() + " is not active");
+            throw new InactiveCourtException("Court with ID " + court.getId() + " is not active");
         }
 
         validateReservationDateTime(request.reservationDate(), request.startTime());
@@ -58,7 +63,7 @@ public class ReservationService {
             court.getId(),  request.reservationDate(), request.startTime(), ReservationStatus.CONFIRMED);
 
         if(alreadyReserved){
-            throw new InvalidReservationSlotException("The selected time slot is already reserved");
+            throw new ReservationConflictException("The selected time slot is already reserved");
         }
 
         Reservation reservation = new Reservation(user, court, request.reservationDate(), selectedSlot.startTime(), selectedSlot.endTime());

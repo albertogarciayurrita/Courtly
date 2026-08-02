@@ -16,8 +16,12 @@ import com.courtly.availability.exception.InvalidAvailabilityDateException;
 import com.courtly.court.exception.CourtNotFoundException;
 import com.courtly.facility.exception.FacilityNotFoundException;
 import com.courtly.facility.exception.InvalidFacilitySchedulerException;
+import com.courtly.reservation.exception.InactiveCourtException;
+import com.courtly.reservation.exception.InvalidReservationSlotException;
+import com.courtly.reservation.exception.ReservationConflictException;
 import com.courtly.slot.exception.InvalidBookingSlotException;
-import org.springframework.web.bind.MissingServletRequestParameterException;
+import com.courtly.user.exception.UserNotFoundException;
+
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 
@@ -197,4 +201,77 @@ public ResponseEntity<Map<String, Object>> handleValidationErrors(
                 .status(status)
                 .body(response);
         }
+
+        @ExceptionHandler(UserNotFoundException.class)
+        public ResponseEntity<ApiErrorResponse> handleUserNotFound(
+                UserNotFoundException exception
+        ) {
+        HttpStatus status = HttpStatus.NOT_FOUND;
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                exception.getMessage()
+        );
+
+        return ResponseEntity
+                .status(status)
+                .body(response);
+        }
+
+        @ExceptionHandler(InactiveCourtException.class)
+        public ResponseEntity<ApiErrorResponse> handleInactiveCourt(
+                InactiveCourtException exception
+        ) {
+        HttpStatus status = HttpStatus.CONFLICT;
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                exception.getMessage()
+        );
+
+        return ResponseEntity
+                .status(status)
+                .body(response);
+        }
+
+        @ExceptionHandler(InvalidReservationSlotException.class)
+        public ResponseEntity<ApiErrorResponse> handleInvalidReservationSlot(
+                InvalidReservationSlotException exception
+        ) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                exception.getMessage()
+        );
+
+        return ResponseEntity
+                .status(status)
+                .body(response);
+        }
+
+        @ExceptionHandler(ReservationConflictException.class)
+        public ResponseEntity<ApiErrorResponse> handleReservationConflict(
+                ReservationConflictException exception
+        ) {
+        HttpStatus status = HttpStatus.CONFLICT;
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                exception.getMessage()
+        );
+
+        return ResponseEntity
+                .status(status)
+                .body(response);
+        }
+
 }
