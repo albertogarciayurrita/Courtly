@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.courtly.auth.exception.InvalidCredentialsException;
 import com.courtly.availability.exception.InvalidAvailabilityDateException;
 import com.courtly.court.exception.CourtNotFoundException;
+import com.courtly.credit.exception.InsufficientCreditsException;
 import com.courtly.facility.exception.FacilityNotFoundException;
 import com.courtly.facility.exception.InvalidFacilitySchedulerException;
 import com.courtly.reservation.exception.InactiveCourtException;
@@ -259,6 +260,24 @@ public ResponseEntity<Map<String, Object>> handleValidationErrors(
         @ExceptionHandler(ReservationConflictException.class)
         public ResponseEntity<ApiErrorResponse> handleReservationConflict(
                 ReservationConflictException exception
+        ) {
+        HttpStatus status = HttpStatus.CONFLICT;
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                exception.getMessage()
+        );
+
+        return ResponseEntity
+                .status(status)
+                .body(response);
+        }
+
+        @ExceptionHandler(InsufficientCreditsException.class)
+        public ResponseEntity<ApiErrorResponse> handleInsufficientCredits(
+                InsufficientCreditsException exception
         ) {
         HttpStatus status = HttpStatus.CONFLICT;
 

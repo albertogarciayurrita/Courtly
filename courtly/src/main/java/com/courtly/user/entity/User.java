@@ -2,6 +2,8 @@ package com.courtly.user.entity;
 
 import java.time.Instant;
 
+import com.courtly.credit.exception.InsufficientCreditsException;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -111,5 +113,16 @@ public class User {
                 ", role=" + role +
                 ", createdAt=" + createdAt +
                 '}';
+    }
+
+    public void deductCredits(int amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Amount to deduct must be greater than 0");
+        }
+        if (this.credits < amount) {
+            throw new InsufficientCreditsException("Insufficient credits. Available: " + this.credits + ", " + "required: " + amount);
+        }
+
+        this.credits -= amount;
     }
 }
