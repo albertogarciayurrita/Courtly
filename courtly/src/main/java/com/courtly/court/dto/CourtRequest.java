@@ -6,6 +6,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 public record CourtRequest(
@@ -17,9 +18,9 @@ public record CourtRequest(
     String description,
 
     @NotNull(message = "Credit cost must not be null")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Credit cost must be greater than 0")
+    @Positive(message = "Credit cost must be greater than 0")
     @Digits(integer = 8, fraction = 2, message = "Credit cost must have at most 8 integer digits and 2 decimal digits")
-    BigDecimal creditCost,
+    int creditCost,
 
     @NotNull(message = "Active status must not be null")
     Boolean active

@@ -1,9 +1,5 @@
 package com.courtly.court.entity;
 
-import java.math.BigDecimal;
-
-import org.hibernate.validator.constraints.ISBN;
-
 import com.courtly.facility.entity.Facility;
 
 import jakarta.persistence.FetchType;
@@ -32,8 +28,8 @@ public class Court {
     @Column(length = 500)
     private String description;
 
-    @Column(name = "credits_cost", nullable = false, precision = 10, scale = 2)
-    private BigDecimal creditCost;
+    @Column(name = "credits_cost", nullable = false)
+    private int creditCost;
 
     @Column(nullable = false)
     private boolean active;
@@ -46,7 +42,7 @@ public class Court {
         // Default constructor for JPA
     }
 
-    public Court(String name, String description, BigDecimal creditCost, boolean active, Facility facility) {
+    public Court(String name, String description, int creditCost, boolean active, Facility facility) {
         this.name = name;
         this.description = description;
         this.creditCost = creditCost;
@@ -74,11 +70,14 @@ public class Court {
         this.description = description;
     }
 
-    public BigDecimal getCreditCost() {
+    public int getCreditCost() {
         return creditCost;
     }
 
-    public void setCreditCost(BigDecimal creditCost) {
+    public void setCreditCost(int creditCost) {
+        if(creditCost <= 0){
+            throw new IllegalArgumentException("Court credit cost must be greater than 0");
+        }
         this.creditCost = creditCost;
     }
 

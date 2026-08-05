@@ -58,7 +58,7 @@ public class ReservationRepositoryTest {
 
         Facility savedFacility = facilityRepository.saveAndFlush(facility);
 
-        Court court = new Court("Padel Court 1", "Indoor padel court", BigDecimal.valueOf(10), true, 
+        Court court = new Court("Padel Court 1", "Indoor padel court", 10, true, 
             savedFacility);
 
         Court savedCourt = courtRepository.saveAndFlush(court);

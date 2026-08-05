@@ -79,7 +79,7 @@ public class User {
     }
 
     public void setCredits(int credits) {
-        if(credits <= 0){
+        if(credits < 0){
             throw new IllegalArgumentException("Credits must be greater than 0");
         }
         this.credits = credits;

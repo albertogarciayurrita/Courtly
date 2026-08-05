@@ -1,0 +1,2 @@
+ALTER TABLE courts
+ALTER COLUMN credits_cost TYPE INTEGER USING credits_cost::INTEGER;
