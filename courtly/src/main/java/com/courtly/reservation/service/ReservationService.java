@@ -9,6 +9,9 @@ import org.springframework.stereotype.Service;
 import com.courtly.court.entity.Court;
 import com.courtly.court.exception.CourtNotFoundException;
 import com.courtly.court.repository.CourtRepository;
+import com.courtly.credit.entity.CreditTransaction;
+import com.courtly.credit.entity.CreditTransactionType;
+import com.courtly.credit.repository.CreditTransactionRepository;
 import com.courtly.reservation.dto.BookingRequest;
 import com.courtly.reservation.dto.BookingResponse;
 import com.courtly.reservation.entity.Reservation;
@@ -27,16 +30,18 @@ import jakarta.transaction.Transactional;
 @Service
 public class ReservationService {
     
-    CourtRepository courtRepository;
-    UserRepository userRepository;
-    BookingSlotService bookingSlotService;
-    ReservationRepository reservationRepository;
+    private final CourtRepository courtRepository;
+    private final UserRepository userRepository;
+    private final BookingSlotService bookingSlotService;
+    private final ReservationRepository reservationRepository;
+    private final CreditTransactionRepository creditTransactionRepository;
 
-    public ReservationService(CourtRepository courtRepository, UserRepository userRepository, BookingSlotService bookingSlotService, ReservationRepository reservationRepository) {
+    public ReservationService(CourtRepository courtRepository, UserRepository userRepository, BookingSlotService bookingSlotService, ReservationRepository reservationRepository, CreditTransactionRepository creditTransactionRepository) {
         this.courtRepository = courtRepository;
         this.userRepository = userRepository;
         this.bookingSlotService = bookingSlotService;
         this.reservationRepository = reservationRepository;
+        this.creditTransactionRepository = creditTransactionRepository;
     }
 
     @Transactional
@@ -67,7 +72,12 @@ public class ReservationService {
         }
 
         Reservation reservation = new Reservation(user, court, request.reservationDate(), selectedSlot.startTime(), selectedSlot.endTime());
+        int creditCost = court.getCreditCost();
+        user.deductCredits(creditCost);
         Reservation savedReservation = reservationRepository.save(reservation);
+        CreditTransaction creditTransaction = new CreditTransaction(user, -creditCost, CreditTransactionType.RESERVATION);
+
+        CreditTransaction savedCreditTransaction = creditTransactionRepository.save(creditTransaction);
         
         return new BookingResponse(savedReservation.getId(), savedReservation.getUser().getId(), savedReservation.getCourt().getId(), 
         savedReservation.getCourt().getName(), savedReservation.getReservationDate(), savedReservation.getStartTime(), 
