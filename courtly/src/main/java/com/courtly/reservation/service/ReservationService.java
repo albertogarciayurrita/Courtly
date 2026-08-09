@@ -19,7 +19,7 @@ import com.courtly.reservation.entity.Reservation;
 import com.courtly.reservation.entity.ReservationStatus;
 import com.courtly.reservation.exception.InactiveCourtException;
 import com.courtly.reservation.exception.InvalidReservationSlotException;
-import com.courtly.reservation.exception.ReservationAlreadyCancelledExcetion;
+import com.courtly.reservation.exception.ReservationAlreadyCancelledException;
 import com.courtly.reservation.exception.ReservationConflictException;
 import com.courtly.reservation.exception.ReservationNotFoundException;
 import com.courtly.reservation.exception.UnauthorizedReservationCancellationException;
@@ -117,7 +117,7 @@ public class ReservationService {
         }
 
         if(reservation.getStatus() == ReservationStatus.CANCELLED) {
-            throw new ReservationAlreadyCancelledExcetion("Reservation is already cancelled");
+            throw new ReservationAlreadyCancelledException("Reservation is already cancelled");
         }
 
         reservation.setStatus(ReservationStatus.CANCELLED);

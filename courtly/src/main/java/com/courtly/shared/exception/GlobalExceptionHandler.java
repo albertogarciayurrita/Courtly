@@ -19,7 +19,10 @@ import com.courtly.facility.exception.FacilityNotFoundException;
 import com.courtly.facility.exception.InvalidFacilitySchedulerException;
 import com.courtly.reservation.exception.InactiveCourtException;
 import com.courtly.reservation.exception.InvalidReservationSlotException;
+import com.courtly.reservation.exception.ReservationAlreadyCancelledException;
 import com.courtly.reservation.exception.ReservationConflictException;
+import com.courtly.reservation.exception.ReservationNotFoundException;
+import com.courtly.reservation.exception.UnauthorizedReservationCancellationException;
 import com.courtly.slot.exception.InvalidBookingSlotException;
 import com.courtly.user.exception.UserNotFoundException;
 
@@ -278,6 +281,60 @@ public ResponseEntity<Map<String, Object>> handleValidationErrors(
         @ExceptionHandler(InsufficientCreditsException.class)
         public ResponseEntity<ApiErrorResponse> handleInsufficientCredits(
                 InsufficientCreditsException exception
+        ) {
+        HttpStatus status = HttpStatus.CONFLICT;
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                exception.getMessage()
+        );
+
+        return ResponseEntity
+                .status(status)
+                .body(response);
+        }
+
+        @ExceptionHandler(ReservationNotFoundException.class)
+        public ResponseEntity<ApiErrorResponse> handleReservationNotFound(
+                ReservationNotFoundException exception
+        ) {
+        HttpStatus status = HttpStatus.NOT_FOUND;
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                exception.getMessage()
+        );
+
+        return ResponseEntity
+                .status(status)
+                .body(response);
+        }
+
+        @ExceptionHandler(UnauthorizedReservationCancellationException.class)
+        public ResponseEntity<ApiErrorResponse> handleUnauthorizedReservationCancellation(
+                UnauthorizedReservationCancellationException exception
+        ) {
+        HttpStatus status = HttpStatus.FORBIDDEN;
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                exception.getMessage()
+        );
+
+        return ResponseEntity
+                .status(status)
+                .body(response);
+        }
+
+        @ExceptionHandler(ReservationAlreadyCancelledException.class)
+        public ResponseEntity<ApiErrorResponse> handleReservationAlreadyCancelled(
+                ReservationAlreadyCancelledException exception
         ) {
         HttpStatus status = HttpStatus.CONFLICT;
 
