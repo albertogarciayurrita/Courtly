@@ -14,15 +14,21 @@ import com.courtly.credit.entity.CreditTransactionType;
 import com.courtly.credit.repository.CreditTransactionRepository;
 import com.courtly.reservation.dto.BookingRequest;
 import com.courtly.reservation.dto.BookingResponse;
+import com.courtly.reservation.dto.CancellationResponse;
 import com.courtly.reservation.entity.Reservation;
 import com.courtly.reservation.entity.ReservationStatus;
 import com.courtly.reservation.exception.InactiveCourtException;
 import com.courtly.reservation.exception.InvalidReservationSlotException;
+import com.courtly.reservation.exception.ReservationAlreadyCancelledExcetion;
 import com.courtly.reservation.exception.ReservationConflictException;
+import com.courtly.reservation.exception.ReservationNotFoundException;
+import com.courtly.reservation.exception.UnauthorizedReservationCancellationException;
 import com.courtly.reservation.repository.ReservationRepository;
 import com.courtly.slot.dto.BookingSlot;
 import com.courtly.slot.service.BookingSlotService;
+import com.courtly.user.entity.Role;
 import com.courtly.user.entity.User;
+import com.courtly.user.exception.UserNotFoundException;
 import com.courtly.user.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
@@ -91,5 +97,33 @@ public class ReservationService {
         if(requestDateTime.isBefore(LocalDateTime.now())){
             throw new InvalidReservationSlotException("Reservation date and time must be in the future");
         }
+    }
+
+
+    @Transactional
+    public CancellationResponse cancelReservartion(String authentictedEmail, Long reservationId){
+
+        User authenticatedUser = userRepository.findByEmail(authentictedEmail)
+            .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        Reservation reservation = reservationRepository.findById(reservationId)
+            .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
+
+        boolean isOwner = reservation.getUser().getId().equals(authenticatedUser.getId());
+        boolean isAdmin = authenticatedUser.getRole() == Role.ADMIN;
+
+        if(!isOwner && !isAdmin) {
+            throw new UnauthorizedReservationCancellationException("User is not allowed to cancel this reservation");
+        }
+
+        if(reservation.getStatus() == ReservationStatus.CANCELLED) {
+            throw new ReservationAlreadyCancelledExcetion("Reservation is already cancelled");
+        }
+
+        reservation.setStatus(ReservationStatus.CANCELLED);
+
+        Reservation cancelledReservation = reservationRepository.save(reservation);
+
+        return new CancellationResponse(cancelledReservation.getId(), cancelledReservation.getStatus());
     }
 }
