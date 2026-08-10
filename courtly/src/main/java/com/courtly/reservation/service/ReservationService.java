@@ -122,8 +122,16 @@ public class ReservationService {
 
         reservation.setStatus(ReservationStatus.CANCELLED);
 
-        Reservation cancelledReservation = reservationRepository.save(reservation);
+        User reservationOwner = reservation.getUser();
 
-        return new CancellationResponse(cancelledReservation.getId(), cancelledReservation.getStatus());
+        int refundCredits = reservation.getCourt().getCreditCost();
+
+        reservationOwner.addCredits(refundCredits);
+
+        CreditTransaction refundTransaction = new CreditTransaction(reservationOwner, refundCredits, CreditTransactionType.REFUND);
+
+        creditTransactionRepository.save(refundTransaction);
+
+        return new CancellationResponse(reservation.getId(), reservation.getStatus());
     }
 }

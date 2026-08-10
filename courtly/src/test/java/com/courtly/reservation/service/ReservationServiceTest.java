@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.courtly.court.entity.Court;
 import com.courtly.court.repository.CourtRepository;
@@ -28,9 +29,12 @@ import com.courtly.credit.repository.CreditTransactionRepository;
 import com.courtly.facility.entity.Facility;
 import com.courtly.reservation.dto.BookingRequest;
 import com.courtly.reservation.entity.Reservation;
+import com.courtly.reservation.entity.ReservationStatus;
+import com.courtly.reservation.exception.ReservationAlreadyCancelledException;
 import com.courtly.reservation.repository.ReservationRepository;
 import com.courtly.slot.dto.BookingSlot;
 import com.courtly.slot.service.BookingSlotService;
+import com.courtly.user.entity.Role;
 import com.courtly.user.entity.User;
 import com.courtly.user.repository.UserRepository;
 
@@ -235,4 +239,207 @@ public class ReservationServiceTest {
         verify(creditTransactionRepository, never())
                 .save(any(CreditTransaction.class));
     }
+
+        @Test
+        void shouldCancelReservationRefundCreditsAndSaveRefundTransaction() {
+        String email = "user@test.com";
+
+        User user = new User(
+                "testuser",
+                email,
+                "encoded-password"
+        );
+
+        ReflectionTestUtils.setField(user, "id", 1L);
+
+        user.setCredits(50);
+
+        Court court = org.mockito.Mockito.mock(Court.class);
+
+        Reservation reservation = new Reservation(
+                user,
+                court,
+                LocalDate.now().plusDays(1),
+                LocalTime.of(10, 0),
+                LocalTime.of(11, 0)
+        );
+
+        when(userRepository.findByEmail(email))
+                .thenReturn(Optional.of(user));
+
+        when(reservationRepository.findById(1L))
+                .thenReturn(Optional.of(reservation));
+
+        when(court.getCreditCost())
+                .thenReturn(10);
+
+        reservationService.cancelReservartion(email, 1L);
+
+        assertEquals(
+                ReservationStatus.CANCELLED,
+                reservation.getStatus()
+        );
+
+        assertEquals(
+                60,
+                user.getCredits()
+        );
+
+        ArgumentCaptor<CreditTransaction> transactionCaptor =
+                ArgumentCaptor.forClass(CreditTransaction.class);
+
+        verify(creditTransactionRepository)
+                .save(transactionCaptor.capture());
+
+        CreditTransaction refundTransaction =
+                transactionCaptor.getValue();
+
+        assertEquals(
+                user,
+                refundTransaction.getUser()
+        );
+
+        assertEquals(
+                10,
+                refundTransaction.getAmount()
+        );
+
+        assertEquals(
+                CreditTransactionType.REFUND,
+                refundTransaction.getType()
+        );
+}
+
+        @Test
+        void shouldRefundReservationOwnerWhenAdminCancelsReservation() {
+        String ownerEmail = "owner@test.com";
+        String adminEmail = "admin@test.com";
+
+        User owner = new User(
+                "owner",
+                ownerEmail,
+                "encoded-password"
+        );
+        ReflectionTestUtils.setField(owner, "id", 1L);
+        owner.setCredits(50);
+
+        User admin = new User(
+                "admin",
+                adminEmail,
+                "encoded-password"
+        );
+        ReflectionTestUtils.setField(admin, "id", 2L);
+        admin.setRole(Role.ADMIN);
+        admin.setCredits(60);
+
+        Court court = org.mockito.Mockito.mock(Court.class);
+
+        Reservation reservation = new Reservation(
+                owner,
+                court,
+                LocalDate.now().plusDays(1),
+                LocalTime.of(10, 0),
+                LocalTime.of(11, 0)
+        );
+
+        when(userRepository.findByEmail(adminEmail))
+                .thenReturn(Optional.of(admin));
+
+        when(reservationRepository.findById(1L))
+                .thenReturn(Optional.of(reservation));
+
+        when(court.getCreditCost())
+                .thenReturn(10);
+
+        reservationService.cancelReservartion(adminEmail, 1L);
+
+        assertEquals(
+                ReservationStatus.CANCELLED,
+                reservation.getStatus()
+        );
+
+        assertEquals(
+                60,
+                owner.getCredits()
+        );
+
+        assertEquals(
+                60,
+                admin.getCredits()
+        );
+
+        ArgumentCaptor<CreditTransaction> transactionCaptor =
+                ArgumentCaptor.forClass(CreditTransaction.class);
+
+        verify(creditTransactionRepository)
+                .save(transactionCaptor.capture());
+
+        CreditTransaction refundTransaction =
+                transactionCaptor.getValue();
+
+        assertEquals(
+                owner,
+                refundTransaction.getUser()
+        );
+
+        assertEquals(
+                10,
+                refundTransaction.getAmount()
+        );
+
+        assertEquals(
+                CreditTransactionType.REFUND,
+                refundTransaction.getType()
+        );
+}
+
+        @Test
+        void shouldNotRefundCreditsWhenReservationIsAlreadyCancelled() {
+        String email = "user@test.com";
+
+        User user = new User(
+                "testuser",
+                email,
+                "encoded-password"
+        );
+        ReflectionTestUtils.setField(user, "id", 1L);
+        user.setCredits(50);
+
+        Court court = org.mockito.Mockito.mock(Court.class);
+
+        Reservation reservation = new Reservation(
+                user,
+                court,
+                LocalDate.now().plusDays(1),
+                LocalTime.of(10, 0),
+                LocalTime.of(11, 0)
+        );
+
+        reservation.setStatus(ReservationStatus.CANCELLED);
+
+        when(userRepository.findByEmail(email))
+                .thenReturn(Optional.of(user));
+
+        when(reservationRepository.findById(1L))
+                .thenReturn(Optional.of(reservation));
+
+        ReservationAlreadyCancelledException exception =
+                assertThrows(
+                        ReservationAlreadyCancelledException.class,
+                        () -> reservationService.cancelReservartion(email, 1L)
+                );
+
+        assertEquals(
+                "Reservation is already cancelled",
+                exception.getMessage()
+        );
+
+        assertEquals(
+                50,
+                user.getCredits()
+        );
+
+        verify(creditTransactionRepository, never())
+                .save(any(CreditTransaction.class));
+}
 }

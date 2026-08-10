@@ -22,6 +22,8 @@ import com.courtly.credit.repository.CreditTransactionRepository;
 import com.courtly.facility.entity.Facility;
 import com.courtly.facility.repository.FacilityRepository;
 import com.courtly.reservation.dto.BookingRequest;
+import com.courtly.reservation.entity.Reservation;
+import com.courtly.reservation.entity.ReservationStatus;
 import com.courtly.reservation.repository.ReservationRepository;
 import com.courtly.user.entity.User;
 import com.courtly.user.repository.UserRepository;
@@ -31,7 +33,7 @@ import jakarta.persistence.EntityManager;
 @SpringBootTest
 @ActiveProfiles("test")
 public class ReservationTransactionIntegrationTest {
-     @Autowired
+    @Autowired
     private ReservationService reservationService;
 
     @Autowired
@@ -56,9 +58,14 @@ public class ReservationTransactionIntegrationTest {
         private Long testUserId;
         private Long testCourtId;
         private Long testFacilityId;
+        private Long testReservationId;
 
         @AfterEach
                 void cleanUp() {
+                
+                if (testReservationId != null) {
+                        reservationRepository.deleteById(testReservationId);
+                }
                 if (testCourtId != null) {
                         courtRepository.deleteById(testCourtId);
                 }
@@ -155,4 +162,95 @@ public class ReservationTransactionIntegrationTest {
         assertThat(reservationExists)
                 .isFalse();
     }
+
+        @Test
+        void shouldRollbackCancellationAndRefundWhenCreditTransactionFails() {
+        String email = "rollback-cancellation-user@courtly.com";
+
+        User user = new User(
+                "rollback-cancellation-user",
+                email,
+                "encoded-password"
+        );
+        user.setCredits(50);
+
+        User savedUser = userRepository.saveAndFlush(user);
+        testUserId = savedUser.getId();
+
+        Facility facility = new Facility(
+                "Cancellation Rollback Sports Center",
+                "Test address",
+                "Facility for cancellation rollback test",
+                LocalTime.of(9, 0),
+                LocalTime.of(21, 0)
+        );
+
+        Facility savedFacility =
+                facilityRepository.saveAndFlush(facility);
+
+        testFacilityId = savedFacility.getId();
+
+        Court court = new Court(
+                "Cancellation Rollback Court",
+                "Court for cancellation rollback test",
+                10,
+                true,
+                savedFacility
+        );
+
+        Court savedCourt =
+                courtRepository.saveAndFlush(court);
+
+        testCourtId = savedCourt.getId();
+
+        Reservation reservation = new Reservation(
+                savedUser,
+                savedCourt,
+                LocalDate.now().plusDays(1),
+                LocalTime.of(10, 0),
+                LocalTime.of(11, 0)
+        );
+
+        Reservation savedReservation =
+                reservationRepository.saveAndFlush(reservation);
+
+        testReservationId = savedReservation.getId();
+
+        when(creditTransactionRepository.save(
+                any(CreditTransaction.class)
+        )).thenThrow(
+                new RuntimeException(
+                        "Simulated refund transaction failure"
+                )
+        );
+
+        RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> reservationService.cancelReservartion(
+                        email,
+                        testReservationId
+                )
+        );
+
+        assertThat(exception.getMessage())
+                .isEqualTo(
+                        "Simulated refund transaction failure"
+                );
+
+        entityManager.clear();
+
+        User userAfterFailure =
+                userRepository.findById(savedUser.getId())
+                        .orElseThrow();
+
+        Reservation reservationAfterFailure =
+                reservationRepository.findById(testReservationId)
+                        .orElseThrow();
+
+        assertThat(userAfterFailure.getCredits())
+                .isEqualTo(50);
+
+        assertThat(reservationAfterFailure.getStatus())
+                .isEqualTo(ReservationStatus.CONFIRMED);
+        }
 }

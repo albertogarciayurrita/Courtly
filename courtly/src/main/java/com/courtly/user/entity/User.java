@@ -125,4 +125,11 @@ public class User {
 
         this.credits -= amount;
     }
+
+    public void addCredits(int amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Amount to refund must be greater than 0");
+        }
+        this.credits += amount;
+    }
 }
