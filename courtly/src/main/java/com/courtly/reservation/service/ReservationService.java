@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import com.courtly.court.entity.Court;
@@ -77,10 +79,29 @@ public class ReservationService {
             throw new ReservationConflictException("The selected time slot is already reserved");
         }
 
+        /*/ 
+        try{
+            Thread.sleep(15000);
+        }catch(InterruptedException e){
+            Thread.currentThread().interrupt();
+        }
+       /*/
+        
         Reservation reservation = new Reservation(user, court, request.reservationDate(), selectedSlot.startTime(), selectedSlot.endTime());
         int creditCost = court.getCreditCost();
         user.deductCredits(creditCost);
-        Reservation savedReservation = reservationRepository.save(reservation);
+        Reservation savedReservation;
+
+        try{
+            savedReservation = reservationRepository.save(reservation);
+        }catch(DataIntegrityViolationException  e){
+            if(isBookingConflict(e)){
+                throw new ReservationConflictException("The selected time slot has just been reserved by another user");
+            }
+
+            throw e;
+        }
+
         CreditTransaction creditTransaction = new CreditTransaction(user, -creditCost, CreditTransactionType.RESERVATION);
 
         CreditTransaction savedCreditTransaction = creditTransactionRepository.save(creditTransaction);
@@ -97,6 +118,21 @@ public class ReservationService {
         if(requestDateTime.isBefore(LocalDateTime.now())){
             throw new InvalidReservationSlotException("Reservation date and time must be in the future");
         }
+    }
+
+    private boolean isBookingConflict(DataIntegrityViolationException e) {
+
+        Throwable cause = e.getCause();
+
+        while (cause != null) {
+            if(cause instanceof ConstraintViolationException constraintViolationException){
+                return "uq_active_reservation_slot".equals(constraintViolationException.getConstraintName());
+            }
+
+            cause = cause.getCause();
+        }
+
+        return false;
     }
 
 
