@@ -12,12 +12,14 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.courtly.court.entity.Court;
@@ -31,6 +33,7 @@ import com.courtly.reservation.dto.BookingRequest;
 import com.courtly.reservation.entity.Reservation;
 import com.courtly.reservation.entity.ReservationStatus;
 import com.courtly.reservation.exception.ReservationAlreadyCancelledException;
+import com.courtly.reservation.exception.ReservationConflictException;
 import com.courtly.reservation.repository.ReservationRepository;
 import com.courtly.slot.dto.BookingSlot;
 import com.courtly.slot.service.BookingSlotService;
@@ -442,4 +445,100 @@ public class ReservationServiceTest {
         verify(creditTransactionRepository, never())
                 .save(any(CreditTransaction.class));
 }
+
+        @Test
+        void shouldThrowReservationConflictWhenDatabaseDetectsDuplicateBooking() {
+
+        String email = "user@test.com";
+        LocalDate reservationDate = LocalDate.now().plusDays(1);
+        LocalTime startTime = LocalTime.of(10, 0);
+        LocalTime endTime = LocalTime.of(11, 0);
+
+        User user = new User(
+                "testuser",
+                email,
+                "encoded-password"
+        );
+        user.setCredits(60);
+
+        Facility facility = org.mockito.Mockito.mock(Facility.class);
+        Court court = org.mockito.Mockito.mock(Court.class);
+
+        BookingRequest request = new BookingRequest(
+                1L,
+                reservationDate,
+                startTime
+        );
+
+        BookingSlot bookingSlot = new BookingSlot(
+                startTime,
+                endTime
+        );
+
+        when(userRepository.findByEmail(email))
+                .thenReturn(Optional.of(user));
+
+        when(courtRepository.findById(1L))
+                .thenReturn(Optional.of(court));
+
+        when(court.isActive())
+                .thenReturn(true);
+
+        when(court.getId())
+                .thenReturn(1L);
+
+        when(court.getCreditCost())
+                .thenReturn(10);
+
+        when(court.getFacility())
+                .thenReturn(facility);
+
+        when(facility.getOpeningTime())
+                .thenReturn(LocalTime.of(8, 0));
+
+        when(facility.getClosingTime())
+                .thenReturn(LocalTime.of(22, 0));
+
+        when(bookingSlotService.generateBookingSlots(
+                LocalTime.of(8, 0),
+                LocalTime.of(22, 0)
+        )).thenReturn(List.of(bookingSlot));
+
+        when(reservationRepository
+                .existsByCourt_IdAndReservationDateAndStartTimeAndStatus(
+                        any(),
+                        any(),
+                        any(),
+                        any()
+                ))
+                .thenReturn(false);
+
+        ConstraintViolationException constraintException =
+                org.mockito.Mockito.mock(ConstraintViolationException.class);
+
+        when(constraintException.getConstraintName())
+                .thenReturn("uq_active_reservation_slot");
+
+        DataIntegrityViolationException databaseException =
+                new DataIntegrityViolationException(
+                        "Database constraint violation",
+                        constraintException   // Parameter 2: THE CAUSE (Throwable cause)
+                );
+
+        when(reservationRepository.save(any(Reservation.class)))
+                .thenThrow(databaseException);
+
+        ReservationConflictException exception = assertThrows(
+                ReservationConflictException.class,
+                () -> reservationService.createBooking(email, request)
+        );
+
+        assertEquals(
+                "The selected time slot has just been reserved by another user",
+                exception.getMessage()
+        );
+
+        verify(creditTransactionRepository, never())
+                .save(any(CreditTransaction.class));
+        }
 }
