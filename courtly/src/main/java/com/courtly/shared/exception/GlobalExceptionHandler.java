@@ -51,10 +51,11 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-public ResponseEntity<Map<String, Object>> handleValidationErrors(
+public ResponseEntity<ValidationErrorResponse> handleValidationErrors(
         MethodArgumentNotValidException exception
 ) {
-    Map<String, String> fieldErrors = new HashMap<>();
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+    Map<String, Object> fieldErrors = new HashMap<>();
 
     exception.getBindingResult()
             .getFieldErrors()
@@ -65,17 +66,12 @@ public ResponseEntity<Map<String, Object>> handleValidationErrors(
                     )
             );
 
-    Map<String, Object> body = Map.of(
-            "timestamp", Instant.now(),
-            "status", HttpStatus.BAD_REQUEST.value(),
-            "error", HttpStatus.BAD_REQUEST.getReasonPhrase(),
-            "message", "Validation failed",
-            "fields", fieldErrors
-    );
+    ValidationErrorResponse response = new ValidationErrorResponse(
+        Instant.now(), status.value(), status.getReasonPhrase(), "Validation failed", fieldErrors);
 
     return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
-            .body(body);
+            .body(response);
     }
 
         @ExceptionHandler(FacilityNotFoundException.class)
