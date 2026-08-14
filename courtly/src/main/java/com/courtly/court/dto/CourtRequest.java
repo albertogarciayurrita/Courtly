@@ -1,8 +1,5 @@
 package com.courtly.court.dto;
 
-import java.math.BigDecimal;
-
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,7 +8,7 @@ import jakarta.validation.constraints.Size;
 
 public record CourtRequest(
     @NotBlank(message = "Court name must not be blank")
-    @Size(max = 100, message = "Name name must not exceed 100 characters")
+    @Size(max = 100, message = "Name must not exceed 100 characters")
     String name,
 
     @Size(max = 500, message = "Description must not exceed 500 characters")
