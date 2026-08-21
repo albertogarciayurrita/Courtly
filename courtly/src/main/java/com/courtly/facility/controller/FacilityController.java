@@ -4,6 +4,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.courtly.facility.service.FacilityService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +30,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 
 
 @RestController
+@Tag(
+        name = "Facilities",
+        description = "Operations for managing sports facilities"
+)
+@SecurityRequirement(name = "bearerAuth")
 @RequestMapping("/facilities")
 public class FacilityController {
     
@@ -34,6 +44,15 @@ public class FacilityController {
         this.facilityService = facilityService;
     }
 
+    @Operation(
+        summary = "Create a facility",
+        description = "Creates a new sports facility."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Facility created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid facility data"),
+            @ApiResponse(responseCode = "401", description = "Authentication is required")
+    })
     @PostMapping
     public ResponseEntity<FacilityResponse> createFacility(@Valid @RequestBody FacilityRequest request) {
         
@@ -41,18 +60,45 @@ public class FacilityController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
     
+    @Operation(
+        summary = "List facilities",
+        description = "Returns all sports facilities."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Facilities retrieved successfully"),
+            @ApiResponse(responseCode = "401", description = "Authentication is required")
+    })
     @GetMapping
     public ResponseEntity<List<FacilityResponse>> findAll() {
         List<FacilityResponse> response = facilityService.findAll();
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+        summary = "Get facility by ID",
+        description = "Returns a facility identified by its ID."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Facility retrieved successfully"),
+            @ApiResponse(responseCode = "401", description = "Authentication is required"),
+            @ApiResponse(responseCode = "404", description = "Facility not found")
+    })
     @GetMapping("/{id}")
     public ResponseEntity<FacilityResponse> findById(@PathVariable Long id) {
         FacilityResponse response = facilityService.findById(id);
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+        summary = "Update a facility",
+        description = "Updates an existing sports facility."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Facility updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid facility data"),
+            @ApiResponse(responseCode = "401", description = "Authentication is required"),
+            @ApiResponse(responseCode = "404", description = "Facility not found")
+    })
     @PutMapping("/{id}")
     public ResponseEntity<FacilityResponse> updateFacility(@PathVariable Long id, @Valid @RequestBody FacilityRequest request) {
         
@@ -60,6 +106,15 @@ public class FacilityController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+        summary = "Delete a facility",
+        description = "Deletes an existing sports facility."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Facility deleted successfully"),
+            @ApiResponse(responseCode = "401", description = "Authentication is required"),
+            @ApiResponse(responseCode = "404", description = "Facility not found")
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<FacilityResponse> deleteFacility(@PathVariable Long id) {
         
